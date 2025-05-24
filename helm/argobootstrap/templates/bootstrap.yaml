@@ -3,6 +3,8 @@ kind: Application
 metadata:
   name: bootstrap
   finalizers: []
+  labels:
+   {{- include "argocreds.labels" . | nindent 4 }}
 spec:
   destination:
     name: ''
