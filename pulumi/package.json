@@ -1,11 +1,18 @@
 {
     "name": "proxmox-talos",
-    "main": "index.ts",
+    "main": "src/index.ts",
     "devDependencies": {
         "@types/node": "^18",
         "typescript": "^5.0.0"
     },
     "dependencies": {
-        "@pulumi/pulumi": "^3.113.0"
+        "@muhlba91/pulumi-proxmoxve": "^6.15.1",
+        "@pulumi/kubernetes": "^4.19.0",
+        "@pulumi/null": "^0.0.9",
+        "@pulumi/pulumi": "^3.113.0",
+        "@pulumi/pulumiservice": "^0.26.5",
+        "@pulumi/random": "^4.16.8",
+        "@pulumiverse/talos": "^0.5.1",
+        "@pulumiverse/time": "^0.1.1"
     }
 }
