@@ -18,6 +18,7 @@ export class CreateProxmoxVm extends TalosInstanceHandler {
                 },
                 cpu: {
                     type: "x86-64-v2-AES",
+                    cores: request.cores,
                 },
                 initialization: {
                     type: "nocloud",
@@ -59,6 +60,7 @@ export class CreateProxmoxVm extends TalosInstanceHandler {
             ...opts,
             provider: request.proxmoxConfig,
             ignoreChanges: ["disks"],
+            deleteBeforeReplace: true
         });
         await super.handle(request, opts);
     }

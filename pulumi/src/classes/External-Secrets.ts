@@ -41,7 +41,7 @@ export class DeployExternalSecrets extends pulumi.ComponentResource {
                 PULUMI_ACCESS_TOKEN: accessToken.value,
             },
             type: "Opaque",
-        });
+        }, { ...opts, parent: accessToken, dependsOn: externalSecrets });
 
         const externalSecretStore = new kubernetes.apiextensions.CustomResource("external-secret", {
             apiVersion: "external-secrets.io/v1",

@@ -25,6 +25,7 @@ export interface TalosClusterArgs {
 export interface InstanceArgs {
     type: "controlplane" | "worker";
     name: string;
+    cores?: number;
     ipAddress: string;
     VM?: VirtualMachine;
     config: Array<string>;

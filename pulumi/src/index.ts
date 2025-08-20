@@ -5,10 +5,8 @@ import { TalosClusterArgs, VmHostArgs } from "./interfaces/TalosHost";
 import { CreateTalosInstance } from "./classes/CreateTalosInstance";
 import * as kubernetes from "@pulumi/kubernetes";
 import { DeployArgoCD } from "./classes/DeployArgoCD";
-//import { DeploySealedSecrets } from "./classes/DeploySealedSecrets.ts";
 import { DeployExternalSecrets } from "./classes/External-Secrets";
 import { getKubeconfig } from "@pulumiverse/talos/cluster/getKubeconfig";
-import { promises } from "fs";
 const proxmoxConfig = new pulumi.Config("proxmox");
 const talosConfig = new pulumi.Config();
 
@@ -16,7 +14,6 @@ const nodeName = proxmoxConfig.require("nodeName");
 const proxmox_host = new proxmoxve.Provider("proxmoxve", {
   endpoint: proxmoxConfig.require("endpoint"),
   insecure: proxmoxConfig.getBoolean("insecure"),
-  //apiToken: proxmoxConfig.requireSecret("apiToken"),
   username: proxmoxConfig.require("username"),
   password: proxmoxConfig.requireSecret("password")
 });
@@ -94,7 +91,7 @@ const vmHostArgs: VmHostArgs = {
   templateId: talosTemplateId,
   nodeName: nodeName,
   dedicatedMemory: 12 * 1024,
-  floatingMemory: 4 * 1024,
+  floatingMemory: 12 * 1024,
 };
 
 
@@ -104,14 +101,14 @@ const controlplanes: CreateTalosInstance[] = [new CreateTalosInstance("controlpl
   type: "controlplane",
   ipAddress: "192.168.1.61",
   name: "controlplane01",
-  dedicatedMemory: 4 * 1024,
-  floatingMemory: 2 * 1024,
+  dedicatedMemory: 6 * 1024,
+  floatingMemory: 6 * 1024,
   config: [
     JSON.stringify(controlplaneConfig),
   ],
 })];
 
-const nodes: CreateTalosInstance[] = [
+export const nodes: CreateTalosInstance[] = [
   new CreateTalosInstance("node01", {
     ...talosClusterArgs,
     ...vmHostArgs,
@@ -151,20 +148,27 @@ export const config = talos.client.getConfigurationOutput({
   clusterName: "talos-pulumi",
   clientConfiguration: machineSecrets.clientConfiguration,
   nodes: controlplanes.concat(nodes).map(node => node.ipAddress),
+}, { dependsOn: nodes });
+
+const health = talos.cluster.getHealthOutput({
+  clientConfiguration: config.clientConfiguration,
+  skipKubernetesChecks: true,
+  controlPlaneNodes: controlplanes.map(node => node.ipAddress),
+  workerNodes: nodes.map(node => node.ipAddress),
+  endpoints: controlplanes.map(node => node.ipAddress),
+})
+
+export const clusterHealth = config.clientConfiguration.apply(clientConfig => {
+  return talos.cluster.getHealthOutput({
+    clientConfiguration: clientConfig,
+    skipKubernetesChecks: true,
+    controlPlaneNodes: controlplanes.map(node => node.ipAddress),
+    workerNodes: nodes.map(node => node.ipAddress),
+    endpoints: controlplanes.map(node => node.ipAddress),
+  })
 });
 
-
-//export const clusterHealth = config.clientConfiguration.apply(clientConfig => {
-//  return talos.cluster.getHealthOutput({
-//    clientConfiguration: clientConfig,
-//    skipKubernetesChecks: true,
-//    controlPlaneNodes: controlplanes.map(node => node.ipAddress),
-//    workerNodes: nodes.map(node => node.ipAddress),
-//    endpoints: ["talos.rhoades-brown.local:6443"],
-//  })
-//});
-
-export const kubeConfig = config.clientConfiguration.apply(clientConfig => {
+export const kubeConfig = clusterHealth.clientConfiguration.apply(clientConfig => {
   return getKubeconfig({
     clientConfiguration: clientConfig,
     node: controlplanes[0].ipAddress,
@@ -180,7 +184,7 @@ const kubernetsProvider = new kubernetes.Provider("kubernetes", {
 });
 
 const externalSecrets = new DeployExternalSecrets("external-secrets", {
-  provider: kubernetsProvider,
+  provider: kubernetsProvider
 });
 
 
@@ -192,12 +196,8 @@ const argocd = new DeployArgoCD("argocd", {
   argoRepoPath: "apps",
   //argoRepoRevision: "initial",
   provider: kubernetsProvider,
-}, {});
+}, {
+  dependsOn: [externalSecrets]
+});
 
-
-//`const sealedSecretsConfig = new pulumi.Config("sealedSecret");
-//`const sealedSecrets = new DeploySealedSecrets("sealed-secrets", {
-//`  tlsCrt: sealedSecretsConfig.requireSecret("tlsCrt"),
-//`  tlsKey: sealedSecretsConfig.requireSecret("tlsKey"),
-//`  provider: kubernetsProvider,
-//`}, {});
+export const talosConfiguration = config.talosConfig
