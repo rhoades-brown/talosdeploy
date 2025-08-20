@@ -7,4 +7,4 @@ encryptedData:
 bootstrap:
     repoURL: https://github.com/rhoades-brown/argo-config.git
     path: apps
-    targetRevision: initial
+    targetRevision: main

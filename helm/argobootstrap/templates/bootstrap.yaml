@@ -14,8 +14,7 @@ spec:
     path: {{ .Values.bootstrap.path | quote }}
     repoURL: {{ .Values.bootstrap.repoURL | quote }}
     targetRevision: {{ .Values.bootstrap.targetRevision | quote }}
-    directory:
-      recurse: true
+    helm: {}
   sources: []
   project: default
   syncPolicy:
