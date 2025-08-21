@@ -1,0 +1,18 @@
+config:
+  proxmox:apiToken:
+    secure: AAABABqdhPXNrBBCtgxdsFi2eBPUxn/MfnMGvzZdYL2ILT+wf4gSsWInOiMvVqKJIUNFkPShB9ZhTG8m07rid5+M7mw=
+  proxmox:endpoint: "https://proxmox.rhoades-brown.local:8006/"
+  proxmox:insecure: "true"
+  proxmox:nodeName: proxmox
+  proxmox:username: root@pam
+  proxmox:password:
+    secure: AAABALTNyXhCOVXVJbMuuUSfavjN6kwEK7K9x6ri2uPnTG/DacdLw8uRLBoyz/qqzQ==
+  proxmox-talos:githubUsername: mark@rhoades-brown.co.uk
+  proxmox-talos:templateName: talostemplate
+  proxmox-talos:nvidiaTemplateName: nvidiatalos
+  proxmox-talos:githubPassword:
+    secure: AAABAGHvuHifSgPYPhNpiwBEz2mSSN5mz6mlaDZp7tQ8s4fXepLhgoeKkT3Tg7tE/ob9WN+APrMd/0UVzaK7u6nSBOOc2XiwmYxYEVXx8I05btePiBroJ9I2mMnsRy7TyXLCTXhebAVAWi8FsjkQM1ltyFkNb6fKzPMFv/Y=
+  proxmox-talos:tlsKey:
+    secure: AAABADUERLlkg6G4/BRU69sBI/7h/QSc9A3xfDh4ZQpaVFp2
+  kubernetes:kubeconfigPath: ~/.kube/config
+  proxmox-talos:kubeconfigPath: ~/.kube/config

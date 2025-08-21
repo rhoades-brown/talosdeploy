@@ -1,0 +1,10 @@
+encryptedData:
+    password: mock-password
+    type: mock-type
+    url: mock-url
+    username: mock-url
+
+bootstrap:
+    repoURL: https://github.com/rhoades-brown/argo-config.git
+    path: apps
+    targetRevision: main

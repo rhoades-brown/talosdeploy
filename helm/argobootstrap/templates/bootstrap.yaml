@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: bootstrap
+  finalizers: []
+  labels:
+   {{- include "argocreds.labels" . | nindent 4 }}
+spec:
+  destination:
+    name: ''
+    namespace: argocd
+    server: 'https://kubernetes.default.svc'
+  source:
+    path: {{ .Values.bootstrap.path | quote }}
+    repoURL: {{ .Values.bootstrap.repoURL | quote }}
+    targetRevision: {{ .Values.bootstrap.targetRevision | quote }}
+    helm: {}
+  sources: []
+  project: default
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
