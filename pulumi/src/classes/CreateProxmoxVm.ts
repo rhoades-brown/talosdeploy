@@ -20,6 +20,10 @@ export class CreateProxmoxVm extends TalosInstanceHandler {
                     type: "x86-64-v2-AES",
                     cores: request.cores,
                 },
+                cdrom: {
+                    interface: "ide3",
+                    fileId: "none",
+                },
                 initialization: {
                     type: "nocloud",
                     dns: {
@@ -59,7 +63,7 @@ export class CreateProxmoxVm extends TalosInstanceHandler {
             }, {
             ...opts,
             provider: request.proxmoxConfig,
-            ignoreChanges: ["disks"],
+            ignoreChanges: ["disks", "cdrom",],
             deleteBeforeReplace: true
         });
         await super.handle(request, opts);

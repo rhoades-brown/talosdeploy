@@ -45,6 +45,7 @@ provisioning:
           machine: {
             kubelet: {
               extraArgs: {
+                // Certificate rotation is always enabled for all nodes to ensure security best practices.
                 "rotate-server-certificates": true,
               },
             },

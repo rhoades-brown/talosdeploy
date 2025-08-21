@@ -7,6 +7,7 @@ import * as kubernetes from "@pulumi/kubernetes";
 import { DeployArgoCD } from "./classes/DeployArgoCD";
 import { DeployExternalSecrets } from "./classes/External-Secrets";
 import { getKubeconfig } from "@pulumiverse/talos/cluster/getKubeconfig";
+import { machine } from "os";
 const proxmoxConfig = new pulumi.Config("proxmox");
 const talosConfig = new pulumi.Config();
 
@@ -35,6 +36,22 @@ const talosTemplate = proxmoxve.vm.getVirtualMachines({
 
 export const talosTemplateId = talosTemplate.then(talosTemplate => talosTemplate.vms[0].vmId);
 
+const nvidiaTalosTemplateName = talosConfig.require("nvidiaTemplateName")
+const nvidiaTalosTemplate = proxmoxve.vm.getVirtualMachines({
+  filters: [
+    {
+      name: "name",
+      values: [nvidiaTalosTemplateName]
+    },
+    {
+      name: "template",
+      values: ["true"]
+    }
+  ]
+}, { provider: proxmox_host });
+
+export const nvidiaTalosTemplateId = nvidiaTalosTemplate.then(nvidiaTalosTemplate => nvidiaTalosTemplate.vms[0].vmId);
+
 const machineSecrets = new talos.machine.Secrets("secrets", {});
 
 const workerConfig: any = {
@@ -45,6 +62,30 @@ const workerConfig: any = {
         "metrics-bind-address": "0.0.0.0:10249",
       }
     }
+  }
+}
+
+const nvidiaWorkerConfig: any = {
+  cluster: {
+    proxy: {
+      extraArgs: {
+        "ipvs-strict-arp": true,
+        "metrics-bind-address": "0.0.0.0:10249",
+      }
+    }
+  },
+
+  machine: {
+    kernel: {
+      modules: [
+        { "name": "nvidia" },
+        { "name": "nvidia_uvm" },
+        { "name": "nvidia_drm" },
+        { "name": "nvidia_modeset" },
+      ]
+    },
+    sysctls:
+      { "net.core.bpf_jit_harden": 1 }
   }
 }
 
@@ -94,6 +135,19 @@ const vmHostArgs: VmHostArgs = {
   floatingMemory: 12 * 1024,
 };
 
+const nvidiaVmHostArgs: VmHostArgs = {
+  proxmoxConfig: proxmox_host,
+  subnet: 24,
+  dns: ["192.168.1.21", "192.168.1.22"],
+  domain: "rhoades-brown.local",
+  gateway: "192.168.1.1",
+  templateId: nvidiaTalosTemplateId,
+  nodeName: nodeName,
+  dedicatedMemory: 12 * 1024,
+  floatingMemory: 12 * 1024,
+};
+
+
 
 const controlplanes: CreateTalosInstance[] = [new CreateTalosInstance("controlplane01", {
   ...talosClusterArgs,
@@ -139,6 +193,17 @@ export const nodes: CreateTalosInstance[] = [
     name: "node03",
     config: [
       JSON.stringify(workerConfig),
+    ],
+  }, { dependsOn: controlplanes }),
+
+  new CreateTalosInstance("nvidianode", {
+    ...talosClusterArgs,
+    ...nvidiaVmHostArgs,
+    type: "worker",
+    ipAddress: "192.168.1.74",
+    name: "nvidianode",
+    config: [
+      JSON.stringify(nvidiaWorkerConfig),
     ],
   }, { dependsOn: controlplanes }),
 ];
