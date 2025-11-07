@@ -33,6 +33,20 @@ export class DeployArgoCD extends pulumi.ComponentResource {
                             "nginx.ingress.kubernetes.io/backend-protocol": "HTTP"
                         }
                     },
+                    extensions: {
+                        enabled: true,
+                        extensionList: [
+                            {
+                                name: "rollout-extension",
+                                env: [
+                                    {
+                                        name: "EXTENSION_URL",
+                                        value: "https://github.com/argoproj-labs/rollout-extension/releases/download/v0.3.7/extension.tar"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
                 },
                 configs: {
                     params: {

@@ -56,22 +56,26 @@ const machineSecrets = new talos.machine.Secrets("secrets", {});
 
 const workerConfig: any = {
   cluster: {
+    network: {
+      cni: {
+        name: "none"
+      },
+    },
     proxy: {
-      extraArgs: {
-        "ipvs-strict-arp": true,
-        "metrics-bind-address": "0.0.0.0:10249",
-      }
+      disabled: true
     }
   }
 }
 
 const nvidiaWorkerConfig: any = {
   cluster: {
+    network: {
+      cni: {
+        name: "none"
+      },
+    },
     proxy: {
-      extraArgs: {
-        "ipvs-strict-arp": true,
-        "metrics-bind-address": "0.0.0.0:10249",
-      }
+      disabled: true
     }
   },
 
@@ -84,6 +88,16 @@ const nvidiaWorkerConfig: any = {
         { "name": "nvidia_modeset" },
       ]
     },
+    files: [{
+      op: "create",
+      path: "/etc/cri/conf.d/20-customization.part",
+      content: `
+        [plugins]
+            [plugins."io.containerd.cri.v1.runtime"]
+              [plugins."io.containerd.cri.v1.runtime".containerd]
+                default_runtime_name = "nvidia"
+      `
+    }],
     sysctls:
       { "net.core.bpf_jit_harden": 1 }
   }
@@ -94,7 +108,15 @@ const controlplaneConfig: any = {
     allowSchedulingOnControlPlanes: false,
     extraManifests: [
       "https://raw.githubusercontent.com/alex1989hu/kubelet-serving-cert-approver/main/deploy/standalone-install.yaml"
-    ]
+    ],
+    network: {
+      cni: {
+        name: "none"
+      },
+    },
+    proxy: {
+      disabled: true
+    },
   },
   machine: {
     kubelet: {
@@ -110,11 +132,11 @@ const controlplaneConfig: any = {
           },
           vip: {
             ip: "192.168.1.60",
-          }
-        }
-      ]
-    }
-  }
+          },
+        },
+      ],
+    },
+  },
 };
 
 const talosClusterArgs: TalosClusterArgs = {
