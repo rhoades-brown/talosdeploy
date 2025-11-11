@@ -45,7 +45,7 @@ const nvidiaTalosTemplate = proxmoxve.vm.getVirtualMachines({
     },
     {
       name: "template",
-      values: ["true"]
+      values: ["true"],
     }
   ]
 }, { provider: proxmox_host });
@@ -56,26 +56,39 @@ const machineSecrets = new talos.machine.Secrets("secrets", {});
 
 const workerConfig: any = {
   cluster: {
+    network: {
+      cni: {
+        name: "none",
+      },
+    },
     proxy: {
-      extraArgs: {
-        "ipvs-strict-arp": true,
-        "metrics-bind-address": "0.0.0.0:10249",
-      }
-    }
-  }
+      disabled: true,
+    },
+  },
+  machine: {
+    nodeTaints: {
+      "node.cilium.io/agent-not-ready": "true:NoSchedule",
+    },
+  },
 }
 
 const nvidiaWorkerConfig: any = {
   cluster: {
+    network: {
+      cni: {
+        name: "none"
+      },
+    },
     proxy: {
-      extraArgs: {
-        "ipvs-strict-arp": true,
-        "metrics-bind-address": "0.0.0.0:10249",
-      }
+      disabled: true
     }
   },
 
   machine: {
+    nodeTaints: {
+      "nvidia.com/gpu": "true:NoSchedule",
+      "node.cilium.io/agent-not-ready": "true:NoSchedule",
+    },
     kernel: {
       modules: [
         { "name": "nvidia" },
@@ -84,6 +97,16 @@ const nvidiaWorkerConfig: any = {
         { "name": "nvidia_modeset" },
       ]
     },
+    files: [{
+      op: "create",
+      path: "/etc/cri/conf.d/20-customization.part",
+      content: `
+        [plugins]
+            [plugins."io.containerd.cri.v1.runtime"]
+              [plugins."io.containerd.cri.v1.runtime".containerd]
+                default_runtime_name = "nvidia"
+      `
+    }],
     sysctls:
       { "net.core.bpf_jit_harden": 1 }
   }
@@ -94,9 +117,20 @@ const controlplaneConfig: any = {
     allowSchedulingOnControlPlanes: false,
     extraManifests: [
       "https://raw.githubusercontent.com/alex1989hu/kubelet-serving-cert-approver/main/deploy/standalone-install.yaml"
-    ]
+    ],
+    network: {
+      cni: {
+        name: "none"
+      },
+    },
+    proxy: {
+      disabled: true
+    },
   },
   machine: {
+    nodeTaints: {
+      "node.cilium.io/agent-not-ready": "true:NoSchedule",
+    },
     kubelet: {
       extraArgs: {
         "rotate-server-certificates": true
@@ -110,11 +144,11 @@ const controlplaneConfig: any = {
           },
           vip: {
             ip: "192.168.1.60",
-          }
-        }
-      ]
-    }
-  }
+          },
+        },
+      ],
+    },
+  },
 };
 
 const talosClusterArgs: TalosClusterArgs = {
