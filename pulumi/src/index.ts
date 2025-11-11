@@ -45,7 +45,7 @@ const nvidiaTalosTemplate = proxmoxve.vm.getVirtualMachines({
     },
     {
       name: "template",
-      values: ["true"]
+      values: ["true"],
     }
   ]
 }, { provider: proxmox_host });
@@ -58,13 +58,18 @@ const workerConfig: any = {
   cluster: {
     network: {
       cni: {
-        name: "none"
+        name: "none",
       },
     },
     proxy: {
-      disabled: true
-    }
-  }
+      disabled: true,
+    },
+  },
+  machine: {
+    nodeTaints: {
+      "node.cilium.io/agent-not-ready": "true:NoSchedule",
+    },
+  },
 }
 
 const nvidiaWorkerConfig: any = {
@@ -80,6 +85,10 @@ const nvidiaWorkerConfig: any = {
   },
 
   machine: {
+    nodeTaints: {
+      "nvidia.com/gpu": "true:NoSchedule",
+      "node.cilium.io/agent-not-ready": "true:NoSchedule",
+    },
     kernel: {
       modules: [
         { "name": "nvidia" },
@@ -119,6 +128,9 @@ const controlplaneConfig: any = {
     },
   },
   machine: {
+    nodeTaints: {
+      "node.cilium.io/agent-not-ready": "true:NoSchedule",
+    },
     kubelet: {
       extraArgs: {
         "rotate-server-certificates": true
