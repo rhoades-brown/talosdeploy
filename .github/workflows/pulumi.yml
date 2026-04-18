@@ -41,6 +41,7 @@ jobs:
         with:
           organization: rhoades-brown
           requested-token-type: urn:pulumi:token-type:access_token:personal
+          scope: user:rhoades-brown
 
       - uses: pulumi/actions@v6
         with:
@@ -85,6 +86,7 @@ jobs:
         with:
           organization: rhoades-brown
           requested-token-type: urn:pulumi:token-type:access_token:personal
+          scope: user:rhoades-brown
 
       - uses: pulumi/actions@v6
         with:
