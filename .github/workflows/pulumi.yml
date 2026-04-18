@@ -28,8 +28,9 @@ jobs:
 
       - uses: pulumi/auth-actions@v1
         with:
-          organization: org-name
-          requested-token-type: urn:pulumi:token-type:access_token:organization
+          organization: rhoades-brown
+          requested-token-type: urn:pulumi:token-type:access_token:personal
+          scopes: rhoades-brown
 
       - uses: pulumi/actions@v6
         with:
