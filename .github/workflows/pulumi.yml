@@ -40,7 +40,7 @@ jobs:
       - uses: pulumi/auth-actions@v1
         with:
           organization: rhoades-brown
-          requested-token-type: urn:pulumi:token-type:access_token:organization
+          requested-token-type: urn:pulumi:token-type:access_token:personal
 
       - uses: pulumi/actions@v6
         with:
@@ -84,7 +84,7 @@ jobs:
       - uses: pulumi/auth-actions@v1
         with:
           organization: rhoades-brown
-          requested-token-type: urn:pulumi:token-type:access_token:organization
+          requested-token-type: urn:pulumi:token-type:access_token:personal
 
       - uses: pulumi/actions@v6
         with:
