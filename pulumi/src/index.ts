@@ -6,8 +6,8 @@ import { CreateTalosInstance } from "./classes/CreateTalosInstance";
 import * as kubernetes from "@pulumi/kubernetes";
 import { DeployArgoCD } from "./classes/DeployArgoCD";
 import { DeployExternalSecrets } from "./classes/External-Secrets";
-import { getKubeconfig } from "@pulumiverse/talos/cluster/getKubeconfig";
-import { machine } from "os";
+
+
 const proxmoxConfig = new pulumi.Config("proxmox");
 const talosConfig = new pulumi.Config();
 
@@ -165,8 +165,8 @@ const vmHostArgs: VmHostArgs = {
   gateway: "192.168.1.1",
   templateId: talosTemplateId,
   nodeName: nodeName,
-  dedicatedMemory: 12 * 1024,
-  floatingMemory: 12 * 1024,
+  dedicatedMemory: 10 * 1024,
+  floatingMemory: 10 * 1024,
 };
 
 const nvidiaVmHostArgs: VmHostArgs = {
@@ -177,8 +177,8 @@ const nvidiaVmHostArgs: VmHostArgs = {
   gateway: "192.168.1.1",
   templateId: nvidiaTalosTemplateId,
   nodeName: nodeName,
-  dedicatedMemory: 12 * 1024,
-  floatingMemory: 12 * 1024,
+  dedicatedMemory: 10 * 1024,
+  floatingMemory: 10 * 1024,
 };
 
 
@@ -247,35 +247,21 @@ export const config = talos.client.getConfigurationOutput({
   clusterName: "talos-pulumi",
   clientConfiguration: machineSecrets.clientConfiguration,
   nodes: controlplanes.concat(nodes).map(node => node.ipAddress),
-}, { dependsOn: nodes });
+});
 
-const health = talos.cluster.getHealthOutput({
+export const talosConfiguration = config.talosConfig
+
+//export const clusterHealth = talos.cluster.getHealthOutput({
+//  clientConfiguration: config.clientConfiguration,
+//  skipKubernetesChecks: true,
+//  controlPlaneNodes: controlplanes.map(node => node.ipAddress),
+//  workerNodes: nodes.map(node => node.ipAddress),
+//  endpoints: controlplanes.map(node => node.ipAddress),
+//});
+//
+export const kubeConfig = talos.cluster.getKubeconfigOutput({
   clientConfiguration: config.clientConfiguration,
-  skipKubernetesChecks: true,
-  controlPlaneNodes: controlplanes.map(node => node.ipAddress),
-  workerNodes: nodes.map(node => node.ipAddress),
-  endpoints: controlplanes.map(node => node.ipAddress),
-})
-
-export const clusterHealth = config.clientConfiguration.apply(clientConfig => {
-  return talos.cluster.getHealthOutput({
-    clientConfiguration: clientConfig,
-    skipKubernetesChecks: true,
-    controlPlaneNodes: controlplanes.map(node => node.ipAddress),
-    workerNodes: nodes.map(node => node.ipAddress),
-    endpoints: controlplanes.map(node => node.ipAddress),
-  })
-});
-
-export const kubeConfig = clusterHealth.clientConfiguration.apply(clientConfig => {
-  return getKubeconfig({
-    clientConfiguration: clientConfig,
-    node: controlplanes[0].ipAddress,
-  })
-});
-
-kubeConfig.kubeconfigRaw.apply(config => {
-  console.log(config)
+  node: controlplanes[0].ipAddress,
 });
 
 const kubernetsProvider = new kubernetes.Provider("kubernetes", {
@@ -284,6 +270,8 @@ const kubernetsProvider = new kubernetes.Provider("kubernetes", {
 
 const externalSecrets = new DeployExternalSecrets("external-secrets", {
   provider: kubernetsProvider
+}, {
+  dependsOn: [...controlplanes, ...nodes]
 });
 
 
@@ -298,5 +286,3 @@ const argocd = new DeployArgoCD("argocd", {
 }, {
   dependsOn: [externalSecrets]
 });
-
-export const talosConfiguration = config.talosConfig

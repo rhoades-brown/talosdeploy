@@ -2,12 +2,13 @@ import * as kubernetes from '@pulumi/kubernetes';
 import * as pulumi from '@pulumi/pulumi';
 import * as pulumiservice from "@pulumi/pulumiservice";
 
-export class DeployExternalSecrets extends pulumi.ComponentResource {
-    constructor(name: string, opts?: pulumi.ComponentResourceOptions) {
-        super("pkg:rhoades-brown:external-secrets", name, {}, opts);
-    }
+interface ExternalSecretsArgs {
+    provider: kubernetes.Provider;
+}
 
-    protected async initialize(externalSecretsArgs: any, opts?: pulumi.ComponentResourceOptions): Promise<void> {
+export class DeployExternalSecrets extends pulumi.ComponentResource {
+    constructor(name: string, externalSecretsArgs: ExternalSecretsArgs, opts?: pulumi.ComponentResourceOptions) {
+        super("pkg:rhoades-brown:external-secrets", name, {}, opts);
 
         const externalSecrets = new kubernetes.helm.v3.Release("external-secrets", {
             namespace: "external-secrets",
@@ -24,7 +25,6 @@ export class DeployExternalSecrets extends pulumi.ComponentResource {
             provider: externalSecretsArgs.provider,
             parent: this,
         });
-
 
         const kubernetesEnvironment = pulumiservice.Environment.get("kubernetes", "rhoades-brown/proxmox/kubernetes", { ...opts, parent: this });
 
@@ -68,5 +68,7 @@ export class DeployExternalSecrets extends pulumi.ComponentResource {
             }
         }, { ...opts, dependsOn: externalSecrets, parent: this });
 
+        // Signal that all child resources have been registered
+        this.registerOutputs({});
     }
 }

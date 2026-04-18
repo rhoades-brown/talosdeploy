@@ -5,9 +5,6 @@ import { ArgoCdArgs } from "../interfaces/ArgoCdArgs";
 export class DeployArgoCD extends pulumi.ComponentResource {
     constructor(name: string, argoCdArgs: ArgoCdArgs, opts?: pulumi.ComponentResourceOptions) {
         super("pkg:rhoades-brown:argocd", name, argoCdArgs, opts);
-    }
-
-    protected async initialize(argoCdArgs: ArgoCdArgs, opts?: pulumi.ComponentResourceOptions): Promise<void> {
 
         const argocdHelm = new kubernetes.helm.v3.Release("argocd", {
             namespace: "argocd",
@@ -65,7 +62,15 @@ export class DeployArgoCD extends pulumi.ComponentResource {
             namespace: argocdHelm.namespace,
             chart: "../helm/argobootstrap",
             values: {}
-        }, { dependsOn: [argocdHelm] });
+        }, {
+            ...opts,
+            provider: argoCdArgs.provider,
+            parent: this,
+            dependsOn: [argocdHelm],
+            aliases: [{ name: "argocd-bootstrap", parent: pulumi.rootStackResource }]
+        });
 
+        // Signal that all child resources have been registered
+        this.registerOutputs({});
     }
 }
