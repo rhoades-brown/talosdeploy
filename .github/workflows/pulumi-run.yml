@@ -35,8 +35,8 @@ jobs:
         if: steps.esc.conclusion == 'success'
         uses: tailscale/github-action@v4
         with:
-          oauth-client-id: ${{ steps.esc.outputs.TS_OAUTH_CLIENT_ID }}
-          audience: ${{ steps.esc.outputs.TS_AUDIENCE }}
+          oauth-client-id: ${{ env.TS_OAUTH_CLIENT_ID }}
+          audience: ${{ env.TS_AUDIENCE }}
           tags: tag:github-actions
 
       - name: Set up Node.js
