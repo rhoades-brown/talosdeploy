@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - initial
     paths:
       - 'pulumi/**'
       - '.github/workflows/pulumi.yml'
@@ -13,6 +12,7 @@ on:
       - main
     paths:
       - 'pulumi/**'
+      - '.github/workflows/pulumi.yml'
 
 permissions:
   id-token: write
@@ -25,16 +25,6 @@ jobs:
     if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v4
-
-      - uses: pulumi/auth-actions@v1
-        with:
-          organization: org-name
-          requested-token-type: urn:pulumi:token-type:access_token:organization
-
-      - uses: pulumi/actions@v6
-        with:
-          command: preview
-          stack-name: rhoades-brown/proxmox-talos/dev
 
       - name: Connect to Tailscale
         uses: tailscale/github-action@v2
@@ -54,16 +44,16 @@ jobs:
         working-directory: ./pulumi
         run: npm ci
 
-      - name: Configure Pulumi
-        uses: pulumi/actions@v5
+      - uses: pulumi/auth-actions@v1
+        with:
+          organization: rhoades-brown
+          requested-token-type: urn:pulumi:token-type:access_token:organization
+
+      - uses: pulumi/actions@v6
         with:
           work-dir: ./pulumi
           command: preview
-          stack-name: dev
-        env:
-          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-          # Add your provider-specific secrets here
-          # PROXMOX_PASSWORD: ${{ secrets.PROXMOX_PASSWORD }}
+          stack-name: rhoades-brown/proxmox-talos/dev
 
   deploy:
     name: Pulumi Deploy
@@ -90,16 +80,16 @@ jobs:
         working-directory: ./pulumi
         run: npm ci
 
-      - name: Configure Pulumi
-        uses: pulumi/actions@v5
+      - uses: pulumi/auth-actions@v1
+        with:
+          organization: rhoades-brown
+          requested-token-type: urn:pulumi:token-type:access_token:organization
+
+      - uses: pulumi/actions@v6
         with:
           work-dir: ./pulumi
           command: up
-          stack-name: dev
-        env:
-          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-          # Add your provider-specific secrets here
-          # PROXMOX_PASSWORD: ${{ secrets.PROXMOX_PASSWORD }}
+          stack-name: rhoades-brown/proxmox-talos/dev
 
   lint:
     name: Lint TypeScript
