@@ -31,6 +31,11 @@ jobs:
         with:
           environment: 'proxmox/home'
 
+      - name: Verify ESC outputs
+        if: steps.esc.conclusion == 'success'
+        run: |
+          echo '${{ toJSON(steps.esc.outputs) }}' | jq -r 'to_entries[] | "\(.key): \(.value[:3])***"'
+
       - name: Connect to Tailscale
         if: steps.esc.conclusion == 'success'
         uses: tailscale/github-action@v4
