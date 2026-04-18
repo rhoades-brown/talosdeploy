@@ -2,9 +2,10 @@
     "compilerOptions": {
         "strict": true,
         "outDir": "bin",
+        "rootDir": "src",
         "target": "es2020",
         "module": "commonjs",
-        "moduleResolution": "node",
+        "moduleResolution": "bundler",
         "sourceMap": true,
         "experimentalDecorators": true,
         "pretty": true,
