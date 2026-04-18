@@ -33,10 +33,10 @@ jobs:
 
       - name: Connect to Tailscale
         if: steps.esc.conclusion == 'success'
-        uses: tailscale/github-action@v2
+        uses: tailscale/github-action@v4
         with:
           oauth-client-id: ${{ env.TS_OAUTH_CLIENT_ID }}
-          oauth-secret: ${{ env.TS_OAUTH_SECRET }}
+          audience: ${{ env.TS_AUDIENCE }}
           tags: tag:github-actions
 
       - name: Set up Node.js
