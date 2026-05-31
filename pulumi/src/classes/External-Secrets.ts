@@ -13,7 +13,11 @@ export class DeployExternalSecrets extends pulumi.ComponentResource {
         // Helm chart is now managed by ArgoCD/Kargo.
         // retainOnDelete prevents Pulumi from deleting the release from the cluster,
         // and ignoreChanges prevents Pulumi from attempting any updates to it.
+        // Explicit name prevents Pulumi auto-naming (e.g. external-secrets-af241177).
+        // ArgoCD manages the same release by the name "external-secrets", so both must agree
+        // on the name or they will install two separate copies and fight each other.
         const externalSecrets = new kubernetes.helm.v3.Release("external-secrets", {
+            name: "external-secrets",
             namespace: "external-secrets",
             chart: "external-secrets",
             createNamespace: true,
