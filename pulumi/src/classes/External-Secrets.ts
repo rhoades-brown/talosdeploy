@@ -10,7 +10,14 @@ export class DeployExternalSecrets extends pulumi.ComponentResource {
     constructor(name: string, externalSecretsArgs: ExternalSecretsArgs, opts?: pulumi.ComponentResourceOptions) {
         super("pkg:rhoades-brown:external-secrets", name, {}, opts);
 
+        // Helm chart is now managed by ArgoCD/Kargo.
+        // retainOnDelete prevents Pulumi from deleting the release from the cluster,
+        // and ignoreChanges prevents Pulumi from attempting any updates to it.
+        // Explicit name prevents Pulumi auto-naming (e.g. external-secrets-af241177).
+        // ArgoCD manages the same release by the name "external-secrets", so both must agree
+        // on the name or they will install two separate copies and fight each other.
         const externalSecrets = new kubernetes.helm.v3.Release("external-secrets", {
+            name: "external-secrets",
             namespace: "external-secrets",
             chart: "external-secrets",
             createNamespace: true,
@@ -24,6 +31,8 @@ export class DeployExternalSecrets extends pulumi.ComponentResource {
             ...opts,
             provider: externalSecretsArgs.provider,
             parent: this,
+            retainOnDelete: true,
+            ignoreChanges: ["*"],
         });
 
         const kubernetesEnvironment = pulumiservice.Environment.get("kubernetes", "rhoades-brown/proxmox/kubernetes", { ...opts, parent: this });
@@ -43,7 +52,9 @@ export class DeployExternalSecrets extends pulumi.ComponentResource {
             type: "Opaque",
         }, { ...opts, parent: accessToken, dependsOn: externalSecrets });
 
-        const externalSecretStore = new kubernetes.apiextensions.CustomResource("external-secret", {
+        // Bootstrap resource: must be created by Pulumi so it exists before ArgoCD
+        // and any ExternalSecret resources are running. Do not move this to ArgoCD.
+        const _externalSecretStore = new kubernetes.apiextensions.CustomResource("external-secret", {
             apiVersion: "external-secrets.io/v1",
             kind: "ClusterSecretStore",
             metadata: {
