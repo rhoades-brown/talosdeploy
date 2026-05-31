@@ -6,6 +6,8 @@ export class DeployArgoCD extends pulumi.ComponentResource {
     constructor(name: string, argoCdArgs: ArgoCdArgs, opts?: pulumi.ComponentResourceOptions) {
         super("pkg:rhoades-brown:argocd", name, argoCdArgs, opts);
 
+        // ArgoCD Helm chart is managed by ArgoCD itself via GitOps (kargo-config/configs/argocd.yaml).
+        // retainOnDelete + ignoreChanges prevent Pulumi from upgrading or deleting it.
         const argocdHelm = new kubernetes.helm.v3.Release("argocd", {
             namespace: "argocd",
             chart: "argo-cd",
@@ -55,9 +57,12 @@ export class DeployArgoCD extends pulumi.ComponentResource {
             ...opts,
             provider: argoCdArgs.provider,
             parent: this,
-            retainOnDelete: true
+            retainOnDelete: true,
+            ignoreChanges: ["*"],
         });
 
+        // Bootstrap Application that points ArgoCD at argo-config/apps.
+        // Once ArgoCD is running it owns this Application; Pulumi must not modify it.
         const argocdBootstrap = new kubernetes.helm.v3.Release("argocd-bootstrap", {
             namespace: argocdHelm.namespace,
             chart: "../helm/argobootstrap",
@@ -67,6 +72,8 @@ export class DeployArgoCD extends pulumi.ComponentResource {
             provider: argoCdArgs.provider,
             parent: this,
             dependsOn: [argocdHelm],
+            retainOnDelete: true,
+            ignoreChanges: ["*"],
             aliases: [{ name: "argocd-bootstrap", parent: pulumi.rootStackResource }]
         });
 
